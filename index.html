@@ -8,14 +8,13 @@
 <meta name="apple-mobile-web-app-title" content="Aanrijding">
 <link rel="apple-touch-icon" href="icon.png">
 <link rel="icon" href="icon.png">
-<style>:root{padding-top:env(safe-area-inset-top,0px)}</style>
-</head>
-<body>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#15202b">
 <title>Aanrijdingshulp</title>
-<meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;800&family=Source+Sans+3:wght@400;600;700&display=swap">
+<style>:root{padding-top:env(safe-area-inset-top,0px)}</style>
 <style>
 /* Layout: stap-voor-stap formulier voor langs de weg. Voertuig A blauw en voertuig B geel, net als op het Europese aanrijdingsformulier. */
 :root {
@@ -108,6 +107,9 @@ textarea { min-height: 84px; resize: vertical; }
 .num { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
 .num b { display: block; font-family: var(--display); font-size: 26px; user-select: all; font-variant-numeric: tabular-nums; }
 .num span { font-size: 14px; color: var(--muted); }
+a.num { color: inherit; text-decoration: none; display: block; }
+a.num b { color: var(--danger); }
+.now { justify-self: start; }
 .todo { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; }
 
 /* Omstandigheden */
@@ -164,6 +166,8 @@ textarea { min-height: 84px; resize: vertical; }
 .navbar .btn { min-width: 110px; padding: 11px 16px; }
 @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
 </style>
+</head>
+<body>
 
 <div class="wrap">
   <header>
@@ -182,9 +186,9 @@ textarea { min-height: 84px; resize: vertical; }
       <span>Vul dit formulier pas in als iedereen veilig is.</span>
     </div>
     <div class="nums">
-      <div class="num"><b>112</b><span>Noodnummer in heel Europa</span></div>
-      <div class="num"><b>101</b><span>Politie in België, geen spoed</span></div>
-      <div class="num"><b>0900 8844</b><span>Politie in Nederland, geen spoed</span></div>
+      <a class="num" href="tel:112"><b>112</b><span>Noodnummer in heel Europa. Tik om te bellen.</span></a>
+      <a class="num" href="tel:101"><b>101</b><span>Politie in België, dringend</span></a>
+      <a class="num" href="tel:09008844"><b>0900 8844</b><span>Politie in Nederland, geen spoed</span></a>
     </div>
     <div class="card">
       <h3>Doe dit eerst</h3>
@@ -214,6 +218,7 @@ textarea { min-height: 84px; resize: vertical; }
       <div class="grid">
         <div class="field"><label for="f-datum">1. Datum</label><input type="date" id="f-datum" data-f="datum"></div>
         <div class="field"><label for="f-tijd">Uur</label><input type="time" id="f-tijd" data-f="tijd"></div>
+        <div class="field full"><button type="button" class="btn small now" id="f-nu">Nu invullen</button><small>Vul je het later in, typ dan de datum en het uur van het ongeval.</small></div>
         <div class="field"><label for="f-land">2. Land</label><input type="text" id="f-land" data-f="land" placeholder="België"></div>
         <div class="field"><label for="f-plaats">Gemeente</label><input type="text" id="f-plaats" data-f="plaats" placeholder="Gent"></div>
         <div class="field full"><label for="f-locatie">Straat, huisnummer of kruispunt</label><input type="text" id="f-locatie" data-f="locatie" placeholder="Kruispunt Kortrijksesteenweg en Sint-Denijslaan"></div>
@@ -357,7 +362,7 @@ textarea { min-height: 84px; resize: vertical; }
     let h = '<h2><span class="badge ' + v + '">' + V + "</span>Voertuig " + V + "</h2><p class=\"lead\">" + STEP_HINT[v] + "</p>";
     V_FIELDS.forEach(([title, hint, fields], gi) => {
       h += '<div class="card ' + v + '"><h3>' + title + "</h3>" + (hint ? '<p class="note" style="margin:0">' + hint + "</p>" : "");
-      if (gi === 3) h += '<label class="check"><input type="checkbox" id="' + v + '-same"> De bestuurder is ook de verzekeringnemer</label>';
+      if (gi === 3) h += '<label class="check"><input type="checkbox" id="' + v + '-same" data-f="' + v + '_same"> De bestuurder is ook de verzekeringnemer</label>';
       if (gi === 2) h += '<div class="field"><span class="lbl">Is schade aan het eigen voertuig verzekerd?</span><div class="choice">' +
         ["Ja", "Nee", "Weet ik niet"].map((o, i) => '<label><input type="radio" name="' + v + '-eigen" id="' + v + "-eigen-" + i + '" data-f="' + v + '_eigenSchade" value="' + o + '"> ' + o + "</label>").join("") + "</div></div>";
       h += '<div class="grid">';
@@ -400,9 +405,13 @@ textarea { min-height: 84px; resize: vertical; }
   }
 
   /* ---------- Velden koppelen ---------- */
-  const now = new Date(), pad2 = (n) => String(n).padStart(2, "0");
-  if (!S.f.datum) S.f.datum = now.getFullYear() + "-" + pad2(now.getMonth() + 1) + "-" + pad2(now.getDate());
-  if (!S.f.tijd) S.f.tijd = pad2(now.getHours()) + ":" + pad2(now.getMinutes());
+  const pad2 = (n) => String(n).padStart(2, "0");
+  $("f-nu").addEventListener("click", () => {
+    const n = new Date();
+    S.f.datum = n.getFullYear() + "-" + pad2(n.getMonth() + 1) + "-" + pad2(n.getDate());
+    S.f.tijd = pad2(n.getHours()) + ":" + pad2(n.getMinutes());
+    fillInputs(); save();
+  });
 
   function fillInputs() {
     document.querySelectorAll("[data-f]").forEach((el) => {
@@ -412,20 +421,26 @@ textarea { min-height: 84px; resize: vertical; }
       else el.value = v ?? "";
     });
   }
+  const SAME = [["vnNaam", "bNaam"], ["vnVoornaam", "bVoornaam"], ["vnAdres", "bAdres"], ["vnLand", "bLand"], ["vnContact", "bContact"]];
+  function syncSame(v) {
+    if (!S.f[v + "_same"]) return;
+    SAME.forEach(([from, to]) => { S.f[v + "_" + to] = S.f[v + "_" + from] || ""; });
+    SAME.forEach(([, to]) => { const el = $(v + "-" + to); if (el && el !== document.activeElement) el.value = S.f[v + "_" + to]; });
+  }
   document.addEventListener("input", (ev) => {
     const el = ev.target; if (!el.dataset || !el.dataset.f) return;
     S.f[el.dataset.f] = el.type === "checkbox" ? el.checked : el.value;
+    const m = el.dataset.f.match(/^([ab])_(vn\w+)$/);
+    if (m) syncSame(m[1]);
+    const t = el.dataset.f.match(/^([ab])_(b(Naam|Voornaam|Adres|Land|Contact))$/);
+    if (t && S.f[t[1] + "_same"]) { S.f[t[1] + "_same"] = false; const c = $(t[1] + "-same"); if (c) c.checked = false; }
     save();
   });
   document.addEventListener("change", (ev) => {
     const el = ev.target;
     if (el.dataset && el.dataset.f && el.type === "radio") { S.f[el.dataset.f] = el.value; save(); }
     const m = el.id && el.id.match(/^([ab])-same$/);
-    if (m && el.checked) {
-      const v = m[1];
-      [["vnNaam", "bNaam"], ["vnVoornaam", "bVoornaam"], ["vnAdres", "bAdres"], ["vnLand", "bLand"], ["vnContact", "bContact"]].forEach(([from, to]) => { S.f[v + "_" + to] = S.f[v + "_" + from] || ""; });
-      fillInputs(); save();
-    }
+    if (m && el.checked) { syncSame(m[1]); fillInputs(); save(); }
   });
 
   /* ---------- Omstandigheden ---------- */
@@ -561,6 +576,7 @@ textarea { min-height: 84px; resize: vertical; }
 
   function missingList() {
     const m = [];
+    if (!val("datum") || !val("tijd")) m.push("Datum en uur van het ongeval");
     if (!val("plaats") && !val("locatie")) m.push("De plaats van het ongeval");
     if (!val("gewonden")) m.push("Of er gewonden zijn");
     for (const v of ["a", "b"]) {
@@ -632,7 +648,7 @@ textarea { min-height: 84px; resize: vertical; }
   const steps = [...document.querySelectorAll("section.step")];
   function isDone(i) {
     if (i === 0) return ["safe1", "safe2", "safe3"].every((k) => S.f[k]);
-    if (i === 1) return !!(val("plaats") || val("locatie")) && !!val("gewonden");
+    if (i === 1) return !!(val("datum") && val("tijd") && (val("plaats") || val("locatie")) && val("gewonden"));
     if (i === 2 || i === 3) { const v = i === 2 ? "a" : "b"; return !!(val(v + "_kenteken") && val(v + "_verzekeraar")); }
     if (i === 4) return S.circ.a.length + S.circ.b.length > 0;
     if (i === 5) return !sketch.isEmpty();
@@ -661,6 +677,10 @@ textarea { min-height: 84px; resize: vertical; }
 
   fillInputs(); renderCirc(); renderPhotos(); sketch.redraw(); sigA.redraw(); sigB.redraw();
   go(S.step || 0);
+
+  if ("serviceWorker" in navigator && location.protocol === "https:") {
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+  }
 })();
 </script>
 
