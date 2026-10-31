@@ -1,0 +1,668 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Aanrijding">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" href="icon.png">
+<style>:root{padding-top:env(safe-area-inset-top,0px)}</style>
+</head>
+<body>
+<title>Aanrijdingshulp</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;800&family=Source+Sans+3:wght@400;600;700&display=swap">
+<style>
+/* Layout: stap-voor-stap formulier voor langs de weg. Voertuig A blauw en voertuig B geel, net als op het Europese aanrijdingsformulier. */
+:root {
+  --bg: #f1f4f7;
+  --surface: #ffffff;
+  --line: #d4dbe3;
+  --ink: #15202b;
+  --muted: #566372;
+  --a: #2457b3;
+  --a-soft: #dce6f8;
+  --b: #e2ad00;
+  --b-soft: #fbf0c8;
+  --b-ink: #3d2e00;
+  --danger: #c02a1f;
+  --danger-soft: #fbe1de;
+  --ok: #1d7a46;
+  --display: "Archivo", "Arial", system-ui, sans-serif;
+  --body: "Source Sans 3", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #10161c; --surface: #18212a; --line: #2c3946; --ink: #e8edf2; --muted: #9aa8b6;
+    --a: #6f9cf0; --a-soft: #1f3155; --b: #f2c33a; --b-soft: #3d3310; --b-ink: #fff3c4;
+    --danger: #ff7b70; --danger-soft: #3f1d1a; --ok: #5cc98b; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #10161c; --surface: #18212a; --line: #2c3946; --ink: #e8edf2; --muted: #9aa8b6;
+  --a: #6f9cf0; --a-soft: #1f3155; --b: #f2c33a; --b-soft: #3d3310; --b-ink: #fff3c4;
+  --danger: #ff7b70; --danger-soft: #3f1d1a; --ok: #5cc98b; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.45;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 16px calc(96px + env(safe-area-inset-bottom, 0px));
+}
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+.wrap { max-width: 760px; margin: 0 auto; display: grid; gap: 18px; }
+
+header { display: grid; gap: 4px; }
+h1 { font-family: var(--display); font-weight: 800; font-size: clamp(26px, 6vw, 34px); line-height: 1.1; margin: 0; text-wrap: balance; }
+header p { margin: 0; color: var(--muted); }
+.saved { font-size: 13px; color: var(--muted); }
+
+/* Stappen */
+.steps { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; }
+.steps button { flex: none; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 6px 12px; font-size: 14px; white-space: nowrap; }
+.steps button[aria-current="step"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+.steps button.done::before { content: "✓ "; color: var(--ok); }
+.steps button[aria-current="step"].done::before { color: inherit; }
+
+section.step { display: grid; gap: 16px; }
+h2 { font-family: var(--display); font-weight: 800; font-size: 24px; margin: 0; text-wrap: balance; }
+h3 { font-family: var(--display); font-weight: 600; font-size: 17px; margin: 0; }
+.lead { margin: 0; color: var(--muted); max-width: 62ch; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: grid; gap: 14px; min-width: 0; }
+.card.a { border-top: 6px solid var(--a); }
+.card.b { border-top: 6px solid var(--b); }
+.badge { display: inline-grid; place-content: center; width: 30px; height: 30px; border-radius: 6px; font-family: var(--display); font-weight: 800; margin-right: 8px; vertical-align: middle; }
+.badge.a { background: var(--a); color: var(--surface); }
+.badge.b { background: var(--b); color: #1e1700; }
+
+/* Velden */
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 520px) { .grid { grid-template-columns: 1fr; } }
+.full { grid-column: 1 / -1; }
+.field { display: grid; gap: 4px; min-width: 0; }
+.field > label, .field > .lbl { font-size: 14px; font-weight: 600; }
+.field small { color: var(--muted); font-size: 13px; }
+input[type="text"], input[type="date"], input[type="time"], input[type="tel"], select, textarea {
+  width: 100%; min-width: 0; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); font-size: 16px;
+}
+textarea { min-height: 84px; resize: vertical; }
+.choice { display: flex; gap: 8px; flex-wrap: wrap; }
+.choice label { display: flex; align-items: center; gap: 6px; border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; background: var(--bg); cursor: pointer; }
+.choice input { accent-color: var(--ink); width: 18px; height: 18px; }
+.check { display: flex; gap: 10px; align-items: flex-start; }
+.check input { width: 20px; height: 20px; margin-top: 2px; accent-color: var(--ink); flex: none; }
+.sep { border: 0; border-top: 1px solid var(--line); margin: 4px 0; }
+
+/* Veiligheid */
+.alert { background: var(--danger-soft); border: 1px solid var(--danger); border-radius: 12px; padding: 14px 16px; display: grid; gap: 6px; }
+.alert strong { color: var(--danger); font-family: var(--display); font-size: 18px; }
+.nums { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.num { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+.num b { display: block; font-family: var(--display); font-size: 26px; user-select: all; font-variant-numeric: tabular-nums; }
+.num span { font-size: 14px; color: var(--muted); }
+.todo { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+
+/* Omstandigheden */
+.circ { display: grid; gap: 0; }
+.circ-head, .circ-row { display: grid; grid-template-columns: 48px minmax(0, 1fr) 48px; gap: 8px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.circ-head { font-family: var(--display); font-weight: 800; text-align: center; border-bottom-width: 2px; }
+.circ-head span:nth-child(2) { text-align: left; font-family: var(--body); font-weight: 600; font-size: 14px; color: var(--muted); }
+.circ-row p { margin: 0; font-size: 15px; }
+.circ-row p i { font-style: normal; color: var(--muted); font-variant-numeric: tabular-nums; margin-right: 4px; }
+.box { width: 40px; height: 40px; border-radius: 8px; border: 2px solid var(--line); background: var(--bg); display: grid; place-content: center; font-weight: 800; font-size: 20px; justify-self: center; }
+.box.a[aria-pressed="true"] { background: var(--a); border-color: var(--a); color: var(--surface); }
+.box.b[aria-pressed="true"] { background: var(--b); border-color: var(--b); color: #1e1700; }
+.count { display: flex; gap: 16px; font-weight: 600; flex-wrap: wrap; }
+
+/* Tekenen */
+.pad-tools { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.pen { width: 36px; height: 36px; border-radius: 50%; border: 3px solid var(--line); }
+.pen[aria-pressed="true"] { border-color: var(--ink); }
+.pad { width: 100%; max-width: 100%; display: block; background: #ffffff; border: 1px solid var(--line); border-radius: 10px; touch-action: none; }
+.sketch { aspect-ratio: 3 / 2; }
+.sig { aspect-ratio: 3 / 1; }
+
+/* Foto's */
+.photos { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
+.photo { position: relative; }
+.photo img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; display: block; }
+.photo button { position: absolute; top: 6px; right: 6px; }
+
+/* Knoppen */
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 9px 14px; font-weight: 600; }
+.btn.primary { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+.btn.small { padding: 5px 10px; font-size: 14px; }
+.btn.danger { color: var(--danger); border-color: var(--danger); }
+.file-btn { display: inline-flex; align-items: center; gap: 8px; }
+.file-btn input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+
+/* Overzicht */
+.missing { background: var(--b-soft); color: var(--b-ink); border-radius: 10px; padding: 12px 14px; display: grid; gap: 4px; }
+.missing ul { margin: 0; padding-left: 20px; }
+.all-ok { color: var(--ok); font-weight: 600; }
+.summary { white-space: pre-wrap; font-size: 14px; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 12px; max-height: 360px; overflow: auto; font-variant-numeric: tabular-nums; }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.note { font-size: 14px; color: var(--muted); }
+.note.ok { color: var(--ok); } .note.err { color: var(--danger); }
+
+/* Navigatiebalk */
+.navbar {
+  position: fixed; left: 0; right: 0; bottom: 0; background: var(--surface); border-top: 1px solid var(--line);
+  padding-top: 10px; padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.navbar .inner { max-width: 760px; margin: 0 auto; display: flex; gap: 10px; align-items: center; }
+.navbar .pos { flex: 1; text-align: center; font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.navbar .btn { min-width: 110px; padding: 11px 16px; }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Aanrijdingshulp</h1>
+    <p>Verzamel alle gegevens voor het Europees aanrijdingsformulier, stap voor stap.</p>
+    <span class="saved" id="saved">Je antwoorden worden bewaard op dit toestel.</span>
+  </header>
+
+  <nav class="steps" id="steps" aria-label="Stappen"></nav>
+
+  <!-- 1. Veiligheid -->
+  <section class="step" data-title="Veiligheid">
+    <h2>Eerst veilig</h2>
+    <div class="alert">
+      <strong>Iemand gewond? Bel meteen 112.</strong>
+      <span>Vul dit formulier pas in als iedereen veilig is.</span>
+    </div>
+    <div class="nums">
+      <div class="num"><b>112</b><span>Noodnummer in heel Europa</span></div>
+      <div class="num"><b>101</b><span>Politie in België, geen spoed</span></div>
+      <div class="num"><b>0900 8844</b><span>Politie in Nederland, geen spoed</span></div>
+    </div>
+    <div class="card">
+      <h3>Doe dit eerst</h3>
+      <ul class="todo">
+        <li><label class="check"><input type="checkbox" id="s-1" data-f="safe1"> Zet je alarmlichten aan</label></li>
+        <li><label class="check"><input type="checkbox" id="s-2" data-f="safe2"> Trek je fluohesje aan voor je uitstapt</label></li>
+        <li><label class="check"><input type="checkbox" id="s-3" data-f="safe3"> Plaats de gevarendriehoek op ongeveer 30 meter achter je auto</label></li>
+        <li><label class="check"><input type="checkbox" id="s-4" data-f="safe4"> Zet de auto's aan de kant als niemand gewond is en dat veilig kan. Neem eerst een paar foto's van hoe ze stonden.</label></li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Bel de politie als</h3>
+      <ul class="todo">
+        <li>Er gewonden zijn</li>
+        <li>De andere bestuurder zijn gegevens niet wil geven of wegrijdt</li>
+        <li>Je denkt dat de andere bestuurder gedronken heeft</li>
+        <li>Jullie het helemaal niet eens worden</li>
+      </ul>
+    </div>
+    <p class="lead">Deze app helpt je alles te noteren. Het officiële formulier is het blauw-gele aanrijdingsformulier op papier of in de app van je verzekeraar. Neem je gegevens daaruit over en laat het door beide bestuurders ondertekenen. Teken niets wat je niet begrijpt.</p>
+  </section>
+
+  <!-- 2. Ongeval -->
+  <section class="step" data-title="Ongeval" hidden>
+    <h2>Het ongeval</h2>
+    <div class="card">
+      <div class="grid">
+        <div class="field"><label for="f-datum">1. Datum</label><input type="date" id="f-datum" data-f="datum"></div>
+        <div class="field"><label for="f-tijd">Uur</label><input type="time" id="f-tijd" data-f="tijd"></div>
+        <div class="field"><label for="f-land">2. Land</label><input type="text" id="f-land" data-f="land" placeholder="België"></div>
+        <div class="field"><label for="f-plaats">Gemeente</label><input type="text" id="f-plaats" data-f="plaats" placeholder="Gent"></div>
+        <div class="field full"><label for="f-locatie">Straat, huisnummer of kruispunt</label><input type="text" id="f-locatie" data-f="locatie" placeholder="Kruispunt Kortrijksesteenweg en Sint-Denijslaan"></div>
+        <div class="field full"><span class="lbl">3. Gewonden, ook licht gewond?</span>
+          <div class="choice"><label><input type="radio" name="gewonden" id="f-gew-n" data-f="gewonden" value="Nee"> Nee</label><label><input type="radio" name="gewonden" id="f-gew-j" data-f="gewonden" value="Ja"> Ja</label></div></div>
+        <div class="field full"><span class="lbl">4. Schade aan andere voertuigen dan A en B</span>
+          <div class="choice"><label><input type="radio" name="schade-v" id="f-sv-n" data-f="schadeVoertuigen" value="Nee"> Nee</label><label><input type="radio" name="schade-v" id="f-sv-j" data-f="schadeVoertuigen" value="Ja"> Ja</label></div></div>
+        <div class="field full"><span class="lbl">Schade aan voorwerpen, zoals een paal of hek</span>
+          <div class="choice"><label><input type="radio" name="schade-o" id="f-so-n" data-f="schadeVoorwerpen" value="Nee"> Nee</label><label><input type="radio" name="schade-o" id="f-so-j" data-f="schadeVoorwerpen" value="Ja"> Ja</label></div></div>
+        <div class="field full"><label for="f-getuigen">5. Getuigen</label><textarea id="f-getuigen" data-f="getuigen" placeholder="Naam, adres en telefoonnummer van elke getuige"></textarea><small>Vraag getuigen hun gegevens voor ze weggaan.</small></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 en 4. Voertuigen -->
+  <section class="step" data-title="Voertuig A" data-v="a" hidden></section>
+  <section class="step" data-title="Voertuig B" data-v="b" hidden></section>
+
+  <!-- 5. Omstandigheden -->
+  <section class="step" data-title="Omstandigheden" hidden>
+    <h2>12. Omstandigheden</h2>
+    <p class="lead">Kruis voor elk voertuig aan wat klopt. Alleen wat echt gebeurde. Tik op het vakje onder A of B.</p>
+    <div class="card">
+      <div class="circ" id="circ">
+        <div class="circ-head"><span class="badge a" style="margin:0 auto">A</span><span>Omstandigheid</span><span class="badge b" style="margin:0 auto">B</span></div>
+      </div>
+      <div class="count" id="circ-count"></div>
+    </div>
+  </section>
+
+  <!-- 6. Schets -->
+  <section class="step" data-title="Schets" hidden>
+    <h2>13. Schets van het ongeval</h2>
+    <p class="lead">Teken de weg, de rijrichting met pijlen, de plaats van A en B bij de botsing, verkeersborden en straatnamen.</p>
+    <div class="card">
+      <div class="pad-tools" id="sketch-tools"></div>
+      <canvas class="pad sketch" id="sketch" width="1200" height="800" aria-label="Tekenvlak voor de schets"></canvas>
+    </div>
+  </section>
+
+  <!-- 7. Foto's -->
+  <section class="step" data-title="Foto's" hidden>
+    <h2>Foto's</h2>
+    <p class="lead">Neem foto's van de schade aan beide auto's, de nummerplaten, de plaats van het ongeval en eventuele sporen op de weg. Neem ook een foto van de verzekeringspapieren en het rijbewijs van de andere bestuurder als die akkoord is.</p>
+    <div class="card">
+      <div class="actions">
+        <label class="btn primary file-btn">Foto toevoegen<input type="file" id="photo-in" accept="image/*" multiple></label>
+        <span class="note" id="photo-note"></span>
+      </div>
+      <div class="photos" id="photos"></div>
+    </div>
+  </section>
+
+  <!-- 8. Afronden -->
+  <section class="step" data-title="Afronden" hidden>
+    <h2>Afronden</h2>
+    <div class="card">
+      <div class="field"><label for="f-opm">14. Opmerkingen</label><textarea id="f-opm" data-f="opmerkingen" placeholder="Bijvoorbeeld: het regende, het verkeerslicht stond op oranje"></textarea></div>
+    </div>
+    <div class="card a">
+      <h3><span class="badge a">A</span>15. Handtekening bestuurder A</h3>
+      <canvas class="pad sig" id="sig-a" width="900" height="300" aria-label="Handtekening bestuurder A"></canvas>
+      <div><button class="btn small" id="sig-a-clear">Wissen</button></div>
+    </div>
+    <div class="card b">
+      <h3><span class="badge b">B</span>15. Handtekening bestuurder B</h3>
+      <canvas class="pad sig" id="sig-b" width="900" height="300" aria-label="Handtekening bestuurder B"></canvas>
+      <div><button class="btn small" id="sig-b-clear">Wissen</button></div>
+    </div>
+    <div class="card">
+      <h3>Controle</h3>
+      <div id="missing"></div>
+      <div class="actions">
+        <button class="btn primary" id="download">Rapport downloaden</button>
+        <button class="btn" id="copy">Tekst kopiëren</button>
+        <span class="note" id="out-note" role="status"></span>
+      </div>
+      <div class="summary" id="summary" tabindex="0"></div>
+      <p class="note">Stuur het rapport en je foto's naar je verzekeraar, samen met het ondertekende aanrijdingsformulier.</p>
+    </div>
+    <div class="card">
+      <h3>Opnieuw beginnen</h3>
+      <p class="note">Wist alle antwoorden, de schets, handtekeningen en foto's op dit toestel.</p>
+      <div><button class="btn danger" id="reset">Alles wissen</button></div>
+    </div>
+  </section>
+</div>
+
+<div class="navbar">
+  <div class="inner">
+    <button class="btn" id="prev">Vorige</button>
+    <span class="pos" id="pos"></span>
+    <button class="btn primary" id="next">Volgende</button>
+  </div>
+</div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+
+  /* ---------- Inhoud van het formulier ---------- */
+  const CIRC = [
+    "stond geparkeerd of stond stil",
+    "verliet een parkeerplaats of opende een portier",
+    "ging parkeren",
+    "verliet een parkeerterrein, een private grond of een onverharde weg",
+    "reed een parkeerterrein, een private grond of een onverharde weg op",
+    "reed een rotonde op",
+    "reed op een rotonde",
+    "reed achteraan in op een voertuig dat in dezelfde richting en op dezelfde rijstrook reed",
+    "reed in dezelfde richting, maar op een andere rijstrook",
+    "veranderde van rijstrook",
+    "haalde in",
+    "sloeg rechtsaf",
+    "sloeg linksaf",
+    "reed achteruit",
+    "reed op een rijstrook voor verkeer in de andere richting",
+    "kwam van rechts op een kruispunt",
+    "negeerde een voorrangsbord of een rood licht"
+  ];
+  const IMPACT = ["", "Voorkant", "Voorkant links", "Voorkant rechts", "Linkerkant", "Rechterkant", "Achterkant", "Achterkant links", "Achterkant rechts", "Dak", "Onderkant"];
+  const V_FIELDS = [
+    ["6. Verzekeringnemer", "Wie de auto verzekerd heeft. Staat op het verzekeringsbewijs.", [
+      ["vnNaam", "Naam"], ["vnVoornaam", "Voornaam"], ["vnAdres", "Adres", "full"], ["vnPostcode", "Postcode"], ["vnLand", "Land"], ["vnContact", "Telefoon of e-mail", "full"]
+    ]],
+    ["7. Voertuig", "", [
+      ["merk", "Merk en type", "", "Volkswagen Golf"], ["kenteken", "Nummerplaat", "", "1-ABC-123"], ["kentekenLand", "Land van inschrijving"], ["aanhanger", "Nummerplaat aanhangwagen", "", "Alleen als er een aanhangwagen is"]
+    ]],
+    ["8. Verzekeringsmaatschappij", "Staat op het verzekeringsbewijs of de groene kaart.", [
+      ["verzekeraar", "Naam verzekeraar", "full"], ["polis", "Polisnummer"], ["groeneKaart", "Nummer groene kaart"], ["geldigVan", "Geldig van", "date"], ["geldigTot", "Geldig tot", "date"], ["agentschap", "Kantoor of makelaar", "full"]
+    ]],
+    ["9. Bestuurder", "Staat op het rijbewijs.", [
+      ["bNaam", "Naam"], ["bVoornaam", "Voornaam"], ["bGeboorte", "Geboortedatum", "date"], ["bAdres", "Adres", "full"], ["bLand", "Land"], ["bContact", "Telefoon of e-mail"], ["rijbewijs", "Rijbewijsnummer"], ["rijbewijsCat", "Categorie", "", "B"], ["rijbewijsTot", "Rijbewijs geldig tot", "date"]
+    ]]
+  ];
+  const STEP_HINT = { a: "Dit ben jij, of de auto waar jij in zat.", b: "De andere auto. Vraag de bestuurder om zijn rijbewijs en verzekeringsbewijs." };
+
+  function vehicleHtml(v) {
+    const V = v.toUpperCase();
+    let h = '<h2><span class="badge ' + v + '">' + V + "</span>Voertuig " + V + "</h2><p class=\"lead\">" + STEP_HINT[v] + "</p>";
+    V_FIELDS.forEach(([title, hint, fields], gi) => {
+      h += '<div class="card ' + v + '"><h3>' + title + "</h3>" + (hint ? '<p class="note" style="margin:0">' + hint + "</p>" : "");
+      if (gi === 3) h += '<label class="check"><input type="checkbox" id="' + v + '-same"> De bestuurder is ook de verzekeringnemer</label>';
+      if (gi === 2) h += '<div class="field"><span class="lbl">Is schade aan het eigen voertuig verzekerd?</span><div class="choice">' +
+        ["Ja", "Nee", "Weet ik niet"].map((o, i) => '<label><input type="radio" name="' + v + '-eigen" id="' + v + "-eigen-" + i + '" data-f="' + v + '_eigenSchade" value="' + o + '"> ' + o + "</label>").join("") + "</div></div>";
+      h += '<div class="grid">';
+      for (const [k, label, opt, ph] of fields) {
+        const type = opt === "date" ? "date" : "text", full = opt === "full" ? " full" : "";
+        h += '<div class="field' + full + '"><label for="' + v + "-" + k + '">' + label + '</label><input type="' + type + '" id="' + v + "-" + k + '" data-f="' + v + "_" + k + '"' + (ph ? ' placeholder="' + esc(ph) + '"' : "") + "></div>";
+      }
+      h += "</div></div>";
+    });
+    h += '<div class="card ' + v + '"><h3>10. Eerste raakpunt</h3><div class="field"><label for="' + v + '-impact">Waar werd voertuig ' + V + ' als eerste geraakt?</label><select id="' + v + '-impact" data-f="' + v + '_impact">' +
+      IMPACT.map((o) => '<option value="' + o + '">' + (o || "Kies") + "</option>").join("") + "</select></div>" +
+      '<h3>11. Zichtbare schade</h3><div class="field"><label for="' + v + '-schade" class="note">Beschrijf wat je ziet</label><textarea id="' + v + '-schade" data-f="' + v + '_schade" placeholder="Deuk in de voorbumper rechts, koplamp gebroken"></textarea></div></div>';
+    return h;
+  }
+  document.querySelectorAll("[data-v]").forEach((s) => (s.innerHTML = vehicleHtml(s.dataset.v)));
+
+  const circEl = $("circ");
+  CIRC.forEach((t, i) => {
+    const row = document.createElement("div");
+    row.className = "circ-row";
+    row.innerHTML = '<button class="box a" data-c="a" data-i="' + i + '" aria-pressed="false" aria-label="A: ' + esc(t) + '"></button><p><i>' + (i + 1) + ".</i>" + esc(t) + '</p><button class="box b" data-c="b" data-i="' + i + '" aria-pressed="false" aria-label="B: ' + esc(t) + '"></button>';
+    circEl.appendChild(row);
+  });
+
+  /* ---------- Bewaren op dit toestel ---------- */
+  const KEY = "aanrijdingshulp-v1";
+  const blank = () => ({ step: 0, f: {}, circ: { a: [], b: [] }, sketch: [], sigA: [], sigB: [], photos: [] });
+  let S = blank();
+  try { const raw = localStorage.getItem(KEY); if (raw) S = Object.assign(blank(), JSON.parse(raw)); } catch {}
+  let saveT;
+  function save() {
+    clearTimeout(saveT);
+    saveT = setTimeout(() => {
+      try { localStorage.setItem(KEY, JSON.stringify(S)); $("saved").textContent = "Bewaard op dit toestel om " + new Date().toLocaleTimeString("nl-BE", { hour: "2-digit", minute: "2-digit" }) + "."; }
+      catch {
+        try { localStorage.setItem(KEY, JSON.stringify({ ...S, photos: [] })); $("saved").textContent = "Bewaard, behalve de foto's. Het geheugen van je browser is vol."; }
+        catch { $("saved").textContent = "Je browser bewaart niets. Laat deze pagina open tot je klaar bent."; }
+      }
+    }, 300);
+  }
+
+  /* ---------- Velden koppelen ---------- */
+  const now = new Date(), pad2 = (n) => String(n).padStart(2, "0");
+  if (!S.f.datum) S.f.datum = now.getFullYear() + "-" + pad2(now.getMonth() + 1) + "-" + pad2(now.getDate());
+  if (!S.f.tijd) S.f.tijd = pad2(now.getHours()) + ":" + pad2(now.getMinutes());
+
+  function fillInputs() {
+    document.querySelectorAll("[data-f]").forEach((el) => {
+      const v = S.f[el.dataset.f];
+      if (el.type === "checkbox") el.checked = !!v;
+      else if (el.type === "radio") el.checked = v === el.value;
+      else el.value = v ?? "";
+    });
+  }
+  document.addEventListener("input", (ev) => {
+    const el = ev.target; if (!el.dataset || !el.dataset.f) return;
+    S.f[el.dataset.f] = el.type === "checkbox" ? el.checked : el.value;
+    save();
+  });
+  document.addEventListener("change", (ev) => {
+    const el = ev.target;
+    if (el.dataset && el.dataset.f && el.type === "radio") { S.f[el.dataset.f] = el.value; save(); }
+    const m = el.id && el.id.match(/^([ab])-same$/);
+    if (m && el.checked) {
+      const v = m[1];
+      [["vnNaam", "bNaam"], ["vnVoornaam", "bVoornaam"], ["vnAdres", "bAdres"], ["vnLand", "bLand"], ["vnContact", "bContact"]].forEach(([from, to]) => { S.f[v + "_" + to] = S.f[v + "_" + from] || ""; });
+      fillInputs(); save();
+    }
+  });
+
+  /* ---------- Omstandigheden ---------- */
+  function renderCirc() {
+    circEl.querySelectorAll(".box").forEach((b) => {
+      const on = S.circ[b.dataset.c].includes(Number(b.dataset.i));
+      b.setAttribute("aria-pressed", on); b.textContent = on ? "✓" : "";
+    });
+    $("circ-count").innerHTML = "<span>Aantal vakjes A: " + S.circ.a.length + "</span><span>Aantal vakjes B: " + S.circ.b.length + "</span>";
+  }
+  circEl.addEventListener("click", (ev) => {
+    const b = ev.target.closest(".box"); if (!b) return;
+    const list = S.circ[b.dataset.c], i = Number(b.dataset.i), at = list.indexOf(i);
+    if (at >= 0) list.splice(at, 1); else { list.push(i); list.sort((x, y) => x - y); }
+    renderCirc(); save();
+  });
+
+  /* ---------- Tekenvlakken ---------- */
+  function makePad(canvas, getStrokes, opts) {
+    const ctx = canvas.getContext("2d");
+    let color = opts.colors[0][1], cur = null;
+    function redraw() {
+      ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+      if (opts.grid) {
+        ctx.strokeStyle = "#edf0f3"; ctx.lineWidth = 1;
+        for (let x = 0; x <= canvas.width; x += 50) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke(); }
+        for (let y = 0; y <= canvas.height; y += 50) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke(); }
+      }
+      if (opts.line) { ctx.strokeStyle = "#c9d1da"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(40, canvas.height - 60); ctx.lineTo(canvas.width - 40, canvas.height - 60); ctx.stroke(); }
+      ctx.lineCap = "round"; ctx.lineJoin = "round";
+      for (const s of getStrokes()) {
+        ctx.strokeStyle = s.c; ctx.lineWidth = s.w; ctx.beginPath();
+        s.p.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+        if (s.p.length === 1) ctx.lineTo(s.p[0][0] + 0.1, s.p[0][1]);
+        ctx.stroke();
+      }
+    }
+    const pos = (ev) => { const r = canvas.getBoundingClientRect(); return [Math.round(((ev.clientX - r.left) / r.width) * canvas.width), Math.round(((ev.clientY - r.top) / r.height) * canvas.height)]; };
+    canvas.addEventListener("pointerdown", (ev) => { canvas.setPointerCapture(ev.pointerId); cur = { c: color, w: opts.width, p: [pos(ev)] }; getStrokes().push(cur); redraw(); });
+    canvas.addEventListener("pointermove", (ev) => { if (!cur) return; cur.p.push(pos(ev)); redraw(); });
+    const end = () => { if (cur) { cur = null; save(); } };
+    canvas.addEventListener("pointerup", end); canvas.addEventListener("pointercancel", end);
+    if (opts.tools) {
+      const t = opts.tools;
+      t.innerHTML = opts.colors.map(([name, c], i) => '<button class="pen" style="background:' + c + '" data-c="' + c + '" aria-label="' + name + '" title="' + name + '" aria-pressed="' + (i === 0) + '"></button>').join("") +
+        '<button class="btn small" data-act="undo">Ongedaan maken</button><button class="btn small" data-act="clear">Wissen</button>';
+      t.addEventListener("click", (ev) => {
+        const b = ev.target.closest("button"); if (!b) return;
+        if (b.dataset.c) { color = b.dataset.c; t.querySelectorAll(".pen").forEach((p) => p.setAttribute("aria-pressed", p === b)); }
+        if (b.dataset.act === "undo") { getStrokes().pop(); redraw(); save(); }
+        if (b.dataset.act === "clear") { getStrokes().length = 0; redraw(); save(); }
+      });
+    }
+    return { redraw, toDataURL: () => canvas.toDataURL("image/png"), isEmpty: () => !getStrokes().length };
+  }
+  const sketch = makePad($("sketch"), () => S.sketch, { width: 5, grid: true, tools: $("sketch-tools"), colors: [["Zwart, voor de weg", "#1b2430"], ["Blauw, voor voertuig A", "#2457b3"], ["Geel, voor voertuig B", "#e2ad00"], ["Rood, voor de botsing", "#c02a1f"]] });
+  const sigA = makePad($("sig-a"), () => S.sigA, { width: 4, line: true, colors: [["Zwart", "#1b2430"]] });
+  const sigB = makePad($("sig-b"), () => S.sigB, { width: 4, line: true, colors: [["Zwart", "#1b2430"]] });
+  $("sig-a-clear").addEventListener("click", () => { S.sigA.length = 0; sigA.redraw(); save(); });
+  $("sig-b-clear").addEventListener("click", () => { S.sigB.length = 0; sigB.redraw(); save(); });
+
+  /* ---------- Foto's ---------- */
+  function shrink(file) {
+    return new Promise((resolve, reject) => {
+      const img = new Image(), url = URL.createObjectURL(file);
+      img.onload = () => {
+        const k = Math.min(1, 1400 / Math.max(img.width, img.height));
+        const c = document.createElement("canvas"); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+        c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url); resolve(c.toDataURL("image/jpeg", 0.72));
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(); };
+      img.src = url;
+    });
+  }
+  function renderPhotos() {
+    $("photos").innerHTML = S.photos.map((p, i) => '<div class="photo"><img src="' + p + '" alt="Foto ' + (i + 1) + '"><button class="btn small" data-del="' + i + '">Verwijder</button></div>').join("");
+    $("photo-note").textContent = S.photos.length ? S.photos.length + (S.photos.length === 1 ? " foto" : " foto's") : "Nog geen foto's";
+  }
+  $("photo-in").addEventListener("change", async (ev) => {
+    const files = [...ev.target.files]; ev.target.value = "";
+    $("photo-note").textContent = "Foto's verwerken…";
+    for (const f of files) { try { S.photos.push(await shrink(f)); } catch { $("photo-note").textContent = "Eén foto kon niet geopend worden."; } }
+    renderPhotos(); save();
+  });
+  $("photos").addEventListener("click", (ev) => { const b = ev.target.closest("[data-del]"); if (!b) return; S.photos.splice(Number(b.dataset.del), 1); renderPhotos(); save(); });
+
+  /* ---------- Overzicht ---------- */
+  const val = (k) => (S.f[k] || "").toString().trim();
+  const fmtD = (d) => { if (!d) return ""; const [y, m, dd] = d.split("-"); return dd + "/" + m + "/" + y; };
+
+  function sections() {
+    const out = [];
+    out.push(["Ongeval", [
+      ["Datum en uur", [fmtD(val("datum")), val("tijd")].filter(Boolean).join(" om ")],
+      ["Plaats", [val("locatie"), val("plaats"), val("land")].filter(Boolean).join(", ")],
+      ["Gewonden", val("gewonden")],
+      ["Schade aan andere voertuigen", val("schadeVoertuigen")],
+      ["Schade aan voorwerpen", val("schadeVoorwerpen")],
+      ["Getuigen", val("getuigen")]
+    ]]);
+    for (const v of ["a", "b"]) {
+      const rows = [];
+      for (const [title, , fields] of V_FIELDS) {
+        rows.push(["#" + title, ""]);
+        for (const [k, label, opt] of fields) rows.push([label, opt === "date" ? fmtD(val(v + "_" + k)) : val(v + "_" + k)]);
+        if (title.startsWith("8")) rows.push(["Eigen schade verzekerd", val(v + "_eigenSchade")]);
+      }
+      rows.push(["#10. Eerste raakpunt", ""], ["Raakpunt", val(v + "_impact")]);
+      rows.push(["#11. Zichtbare schade", ""], ["Schade", val(v + "_schade")]);
+      rows.push(["#12. Omstandigheden", ""]);
+      if (S.circ[v].length) S.circ[v].forEach((i) => rows.push([String(i + 1), CIRC[i]])); else rows.push(["", "Geen vakjes aangekruist"]);
+      rows.push(["Aantal vakjes", String(S.circ[v].length)]);
+      out.push(["Voertuig " + v.toUpperCase(), rows]);
+    }
+    out.push(["Opmerkingen", [["14. Opmerkingen", val("opmerkingen")]]]);
+    return out;
+  }
+
+  function summaryText() {
+    let t = "AANRIJDING, gegevens voor het Europees aanrijdingsformulier\n";
+    for (const [title, rows] of sections()) {
+      t += "\n== " + title.toUpperCase() + " ==\n";
+      for (const [k, v] of rows) {
+        if (k.startsWith("#")) t += "\n" + k.slice(1) + "\n";
+        else if (v || k === "") t += (k ? k + ": " : "  ") + v + "\n";
+        else t += k + ": -\n";
+      }
+    }
+    t += "\nSchets: " + (sketch.isEmpty() ? "niet getekend" : "zie rapport") + "\nFoto's: " + S.photos.length + "\nHandtekening A: " + (sigA.isEmpty() ? "nee" : "ja") + ", handtekening B: " + (sigB.isEmpty() ? "nee" : "ja") + "\n";
+    return t;
+  }
+
+  function missingList() {
+    const m = [];
+    if (!val("plaats") && !val("locatie")) m.push("De plaats van het ongeval");
+    if (!val("gewonden")) m.push("Of er gewonden zijn");
+    for (const v of ["a", "b"]) {
+      const V = v.toUpperCase();
+      if (!val(v + "_kenteken")) m.push("Nummerplaat van voertuig " + V);
+      if (!val(v + "_verzekeraar")) m.push("Verzekeraar van voertuig " + V);
+      if (!val(v + "_polis")) m.push("Polisnummer van voertuig " + V);
+      if (!val(v + "_bNaam")) m.push("Naam van bestuurder " + V);
+      if (!S.circ[v].length) m.push("Omstandigheden voor voertuig " + V);
+    }
+    if (sketch.isEmpty()) m.push("De schets");
+    if (sigA.isEmpty() || sigB.isEmpty()) m.push("Handtekening van " + (sigA.isEmpty() && sigB.isEmpty() ? "beide bestuurders" : sigA.isEmpty() ? "bestuurder A" : "bestuurder B"));
+    return m;
+  }
+
+  function renderSummary() {
+    const m = missingList();
+    $("missing").innerHTML = m.length
+      ? '<div class="missing"><strong>Nog niet ingevuld</strong><ul>' + m.map((x) => "<li>" + esc(x) + "</li>").join("") + "</ul></div>"
+      : '<p class="all-ok">Alles wat belangrijk is, is ingevuld.</p>';
+    $("summary").textContent = summaryText();
+  }
+
+  function reportHtml() {
+    const tables = sections().map(([title, rows]) => {
+      const cls = title.endsWith(" A") ? "a" : title.endsWith(" B") ? "b" : "";
+      return '<section class="' + cls + '"><h2>' + esc(title) + "</h2><table>" + rows.map(([k, v]) =>
+        k.startsWith("#") ? '<tr><th colspan="2" class="sub">' + esc(k.slice(1)) + "</th></tr>" : "<tr><td>" + esc(k) + "</td><td>" + (esc(v) || "–") + "</td></tr>").join("") + "</table></section>";
+    }).join("");
+    const img = (src, alt) => '<img src="' + src + '" alt="' + alt + '">';
+    return '<!doctype html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Aanrijding ' + esc(fmtD(val("datum"))) + "</title><style>" +
+      "body{font-family:system-ui,sans-serif;max-width:860px;margin:24px auto;padding:0 16px;color:#15202b;line-height:1.4}h1{margin:0 0 4px}h2{margin:24px 0 8px;padding:6px 10px;background:#eef1f4;border-radius:6px}" +
+      "section.a h2{background:#2457b3;color:#fff}section.b h2{background:#e2ad00;color:#1e1700}table{width:100%;border-collapse:collapse}td{padding:5px 8px;border-bottom:1px solid #e3e7ec;vertical-align:top}td:first-child{width:38%;color:#566372}" +
+      "th.sub{text-align:left;padding:10px 8px 4px;font-size:15px}img{max-width:100%;border:1px solid #d4dbe3;border-radius:6px}.sigs{display:grid;grid-template-columns:1fr 1fr;gap:12px}.photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}" +
+      "</style></head><body><h1>Aanrijding</h1><p>Gegevens voor het Europees aanrijdingsformulier. Gemaakt op " + esc(new Date().toLocaleString("nl-BE")) + ".</p>" + tables +
+      "<section><h2>13. Schets</h2>" + (sketch.isEmpty() ? "<p>Geen schets.</p>" : img(sketch.toDataURL(), "Schets van het ongeval")) + "</section>" +
+      '<section><h2>15. Handtekeningen</h2><div class="sigs"><div><p>Bestuurder A</p>' + (sigA.isEmpty() ? "<p>Niet getekend.</p>" : img(sigA.toDataURL(), "Handtekening A")) + "</div><div><p>Bestuurder B</p>" + (sigB.isEmpty() ? "<p>Niet getekend.</p>" : img(sigB.toDataURL(), "Handtekening B")) + "</div></div></section>" +
+      "<section><h2>Foto's</h2>" + (S.photos.length ? '<div class="photos">' + S.photos.map((p, i) => img(p, "Foto " + (i + 1))).join("") + "</div>" : "<p>Geen foto's.</p>") + "</section></body></html>";
+  }
+
+  function outNote(t, cls) { $("out-note").textContent = t; $("out-note").className = "note" + (cls ? " " + cls : ""); }
+  $("copy").addEventListener("click", () => {
+    const text = summaryText();
+    const fallback = () => { const r = document.createRange(); r.selectNodeContents($("summary")); const s = getSelection(); s.removeAllRanges(); s.addRange(r); outNote("Tekst geselecteerd. Kopieer hem met je toestel.", ""); };
+    try { navigator.clipboard.writeText(text).then(() => outNote("Gekopieerd.", "ok"), fallback); } catch { fallback(); }
+  });
+
+  let downloads = null, viewer = !!(window.claude && window.claude.use);
+  if (viewer) window.claude.use("downloads").then((d) => { downloads = d; if (!d) $("download").hidden = true; }).catch(() => { $("download").hidden = true; });
+  $("download").addEventListener("click", async () => {
+    const name = "aanrijding-" + (val("datum") || "rapport") + ".html", html = reportHtml();
+    if (downloads) {
+      try { await downloads.save({ filename: name, data: html }); outNote("Rapport opgeslagen.", "ok"); }
+      catch (e) { outNote(e && e.code === "declined" ? "Niet opgeslagen." : "Downloaden lukt hier niet. Gebruik Tekst kopiëren.", e && e.code === "declined" ? "" : "err"); }
+    } else if (!viewer) {
+      const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([html], { type: "text/html" })); a.download = name;
+      document.body.appendChild(a); a.click(); a.remove(); outNote("Rapport gedownload.", "ok");
+    } else outNote("Even geduld, probeer zo opnieuw.", "");
+  });
+
+  $("reset").addEventListener("click", () => {
+    const b = $("reset");
+    if (!b.dataset.sure) { b.dataset.sure = "1"; b.textContent = "Tik nog eens om alles te wissen"; setTimeout(() => { delete b.dataset.sure; b.textContent = "Alles wissen"; }, 4000); return; }
+    S = blank(); try { localStorage.removeItem(KEY); } catch {}
+    location.reload();
+  });
+
+  /* ---------- Stappen ---------- */
+  const steps = [...document.querySelectorAll("section.step")];
+  function isDone(i) {
+    if (i === 0) return ["safe1", "safe2", "safe3"].every((k) => S.f[k]);
+    if (i === 1) return !!(val("plaats") || val("locatie")) && !!val("gewonden");
+    if (i === 2 || i === 3) { const v = i === 2 ? "a" : "b"; return !!(val(v + "_kenteken") && val(v + "_verzekeraar")); }
+    if (i === 4) return S.circ.a.length + S.circ.b.length > 0;
+    if (i === 5) return !sketch.isEmpty();
+    if (i === 6) return S.photos.length > 0;
+    return !missingList().length;
+  }
+  function renderSteps() {
+    $("steps").innerHTML = steps.map((s, i) => '<button data-go="' + i + '"' + (i === S.step ? ' aria-current="step"' : "") + ' class="' + (isDone(i) ? "done" : "") + '">' + (i + 1) + ". " + s.dataset.title + "</button>").join("");
+    const cur = $("steps").children[S.step]; if (cur) cur.scrollIntoView({ block: "nearest", inline: "center" });
+  }
+  function go(i) {
+    S.step = Math.max(0, Math.min(steps.length - 1, i));
+    steps.forEach((s, j) => (s.hidden = j !== S.step));
+    $("prev").disabled = S.step === 0;
+    $("next").hidden = S.step === steps.length - 1;
+    $("pos").textContent = "Stap " + (S.step + 1) + " van " + steps.length;
+    if (S.step === 5) sketch.redraw();
+    if (S.step === 7) { sigA.redraw(); sigB.redraw(); renderSummary(); }
+    renderSteps(); save();
+    window.scrollTo(0, 0);
+  }
+  $("steps").addEventListener("click", (ev) => { const b = ev.target.closest("[data-go]"); if (b) go(Number(b.dataset.go)); });
+  $("prev").addEventListener("click", () => go(S.step - 1));
+  $("next").addEventListener("click", () => go(S.step + 1));
+  document.addEventListener("input", () => { if (S.step === 7) renderSummary(); });
+
+  fillInputs(); renderCirc(); renderPhotos(); sketch.redraw(); sigA.redraw(); sigB.redraw();
+  go(S.step || 0);
+})();
+</script>
+
+</body>
+</html>
